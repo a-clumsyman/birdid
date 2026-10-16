@@ -1,6 +1,8 @@
 (() => {
 const C = window.BIRDID;
-const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY);
+const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, {
+  accessToken: async () => (await window.Clerk?.session?.getToken()) || null
+});
 const $ = (s, r = document) => r.querySelector(s);
 const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstChild; };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -61,24 +63,8 @@ function renderMeta() { $('#recMeta').textContent = loc ? ('📍 ' + (loc.place 
 /* ---------- auth ---------- */
 function authView() {
   const v = $('#v-auth');
-  const dev = location.hash === '#dev';
-  v.innerHTML = `<div class="auth"><div style="font-size:54px">🐦</div><h1>Bird ID</h1><p class="hint">Record a birdsong, get a name, build your life list.</p>
-    <div id="authForm"><input class="t" id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
-    <button class="btn" id="sendLink">Email me a sign-in link</button></div><p class="small" id="authMsg"></p>
-    ${dev ? `<div class="dev"><input class="t" id="dpw" type="password" placeholder="dev password"><button class="btn ghost" id="devIn">Dev sign in</button></div>` : ''}</div>`;
-  $('#sendLink').onclick = async () => {
-    const email = $('#email').value.trim(); if (!email) return;
-    $('#sendLink').disabled = true;
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-    $('#sendLink').disabled = false;
-    if (error) { $('#authMsg').textContent = error.message.includes('rate') ? 'Too many emails right now. Wait a few minutes and try again.' : error.message; return; }
-    $('#authForm').innerHTML = `<p>Check your email for the sign-in link and tap it. It opens the app signed in.</p><button class="btn ghost" id="again">Use a different email</button>`;
-    $('#again').onclick = authView;
-  };
-  if (dev) $('#devIn').onclick = async () => {
-    const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#dpw').value });
-    if (error) $('#authMsg').textContent = error.message;
-  };
+  v.innerHTML = `<div class="auth"><div style="font-size:54px">🐦</div><h1>Bird ID</h1><p class="hint">Record a birdsong, get a name, build your life list.</p><div id="clerkAuth"></div></div>`;
+  Clerk.mountSignIn($('#clerkAuth'), { routing: 'virtual' });
 }
 
 /* ---------- recording ---------- */
@@ -263,7 +249,7 @@ async function openProfile() {
     const { error } = await sb.from('devices').insert({ user_id: user.id, name, key_hash: hash }); if (error) return toast(error.message);
     $('#devOut').innerHTML = `<p class="small">Device key (copy now, it will not be shown again):</p><code>${key}</code><p class="small">POST clips to <code>${esc(C.API_URL)}/ingest</code> with form fields <code>file</code>, <code>device_key</code>, <code>isolated=true</code>, <code>isolation_score</code>, optional <code>lat</code>, <code>lon</code>, <code>place_name</code>, <code>habitat</code>.</p>`;
   };
-  $('#signOut').onclick = async () => { $('#sheet').hidden = true; await sb.auth.signOut(); };
+  $('#signOut').onclick = async () => { $('#sheet').hidden = true; await Clerk.signOut(); };
 }
 function setAvatar() { const a = $('#avatarBtn'); const n = (profile?.display_name || user?.email || '?').trim(); a.textContent = profile?.avatar_url ? '' : n[0].toUpperCase(); a.style.backgroundImage = profile?.avatar_url ? `url("${profile.avatar_url}")` : ''; }
 
@@ -277,13 +263,24 @@ $('#recBtn').onclick = startRecording; $('#avatarBtn').onclick = () => user && o
 $('#q').oninput = renderLog; $('#exportBtn').onclick = exportCsv;
 $('#favFilter').onclick = (e) => { favOnly = !favOnly; e.target.setAttribute('aria-pressed', favOnly); renderLog(); };
 
-async function onSession(session) {
-  user = session?.user || null;
+async function onClerkUser(cu) {
+  user = cu ? { id: cu.id, email: cu.primaryEmailAddress?.emailAddress || '' } : null;
   $('#tabs').style.display = user ? '' : 'none'; $('#avatarBtn').style.display = user ? '' : 'none';
   if (!user) { document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-auth')); authView(); return; }
-  const { data } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle(); profile = data; setAvatar();
+  let { data } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if (!data) {
+    const dn = cu.fullName || (user.email ? user.email.split('@')[0] : null);
+    const ins = await sb.from('profiles').insert({ id: user.id, display_name: dn }).select().single();
+    data = ins.data;
+  }
+  profile = data; setAvatar();
   show(tab === 'auth' ? 'record' : tab); getLocation().then(l => { loc = l; renderMeta(); }); loadObs();
 }
-sb.auth.onAuthStateChange((ev, s) => { if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setTimeout(() => onSession(s), 0); });
+(async () => {
+  while (!window.Clerk) await new Promise(r => setTimeout(r, 60));
+  await Clerk.load();
+  Clerk.addListener(({ user: cu }) => { onClerkUser(cu); });
+  onClerkUser(Clerk.user);
+})();
 renderMeta();
 })();
