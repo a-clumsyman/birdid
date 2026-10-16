@@ -99,7 +99,7 @@ async def ingest(
             return {"stored": False, "reason": "no_species_above_threshold"}
         ts = recorded_at or datetime.now(timezone.utc).isoformat()
         ext = (file.filename or "clip.webm").rsplit(".", 1)[-1].lower()
-        ctype = file.content_type or "audio/webm"
+        ctype = {"webm": "audio/webm", "ogg": "audio/ogg", "opus": "audio/ogg", "mp3": "audio/mpeg", "wav": "audio/wav", "m4a": "audio/mp4", "mp4": "audio/mp4"}.get(ext, "audio/webm")
         path = f"{dev['user_id']}/{dev['id']}/{int(datetime.now(timezone.utc).timestamp()*1000)}.{ext}"
         up = await c.post(f"{SB_URL}/storage/v1/object/recordings/{path}", content=data, headers=sb_headers({"Content-Type": ctype}))
         if up.status_code >= 300:
