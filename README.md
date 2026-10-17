@@ -10,7 +10,9 @@ BirdNET models are CC BY-NC-SA 4.0: personal, non-commercial use.
 
 ## Header plate credits (all public domain)
 
-- `web/assets/plate-prinia.webp` - ashy prinia, Plate VI, T. C. Jerdon, *Illustrations of Indian Ornithology*, 1847 (Wikimedia Commons, public domain).
-- `web/assets/plate-flycatcher.webp` - Indian paradise flycatcher, Plate VII, same work.
-- `web/assets/plate-fantail.webp` - white-browed fantail, Plate II, same work.
-- `web/assets/plate-nightjar-night.webp` - Indian nightjar ink etching, Hardwicke, c. 1790s (British Museum collection via Wikimedia Commons, public domain); inverted to white-on-indigo for the night theme.
+The four WebP plates are embedded as data URLs in the `PLATES` map in `web/app.js`, so the source is self-contained. Original image names and credits:
+
+- `plate-prinia.webp` - ashy prinia, Plate VI, T. C. Jerdon, *Illustrations of Indian Ornithology*, 1847 (Wikimedia Commons, public domain).
+- `plate-flycatcher.webp` - Indian paradise flycatcher, Plate VII, same work.
+- `plate-fantail.webp` - white-browed fantail, Plate II, same work.
+- `plate-nightjar-night.webp` - Indian nightjar ink etching, Hardwicke, c. 1790s (British Museum collection via Wikimedia Commons, public domain); inverted to white-on-indigo for the night theme.
