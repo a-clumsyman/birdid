@@ -23,42 +23,31 @@ function applyTod() {
   const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
   const t = pref === 'auto' ? todOf(h) : pref;
   document.documentElement.dataset.tod = t;
-  document.querySelector('meta[name=theme-color]').content = t === 'night' ? '#1b2230' : '#f0e5cc';
-  $('#scene').innerHTML = sceneSVG(t, h); $('#scene').classList.toggle('listening', !!Mic.on);
+  document.querySelector('meta[name=theme-color]').content = t === 'night' ? '#141b2a' : '#f2ead6';
+  $('#scene').innerHTML = scenePlate(t, h); $('#scene').classList.toggle('listening', !!Mic.on);
   const nm = (profile?.display_name || '').split(' ')[0];
   $('#helloH').textContent = TOD_COPY[t][0] + (nm ? ', ' + nm : '');
   $('#helloP').textContent = TOD_COPY[t][1];
 }
-function sceneSVG(t, h) {
-  const night = t === 'night', frac = night ? 0.5 : Math.min(1, Math.max(0, (h - 5.5) / 14));
-  const sx = 50 + frac * 420, sy = 150 - Math.sin(frac * Math.PI) * 105;
-  const orb = night ? `<circle cx="150" cy="58" r="17" fill="#f4efd8"/><circle cx="143" cy="53" r="17" fill="#27355a"/>` : `<circle cx="${sx}" cy="${sy}" r="${t === 'day' ? 20 : 26}" fill="${t === 'day' ? '#fff0b0' : '#ffd9a0'}" opacity=".95"/>`;
-  const stars = night ? Array.from({ length: 26 }, (_, i) => `<circle cx="${(i * 97) % 520}" cy="${(i * 53) % 110 + 8}" r="${i % 4 ? .8 : 1.4}" fill="#fff" opacity="${.4 + (i % 5) / 8}"/>`).join('') : '';
-  const cloud = (x, y, s) => night ? '' : `<g transform="translate(${x} ${y}) scale(${s})" fill="#fff" opacity=".75"><ellipse cx="0" cy="0" rx="34" ry="9"/><ellipse cx="-14" cy="-8" rx="18" ry="9"/><ellipse cx="12" cy="-10" rx="20" ry="11"/></g>`;
-  const reeds = Array.from({ length: 16 }, (_, i) => { const x = 8 + i * 15 + (i % 3) * 4, hh = 40 + (i * 37) % 36, lean = ((i * 7) % 9) - 4; return `<path d="M${x} 232 Q${x + lean} ${232 - hh * .6} ${x + lean * 2} ${232 - hh}" stroke="var(--hill2)" stroke-width="2" fill="none"/><ellipse cx="${x + lean * 2}" cy="${232 - hh - 7}" rx="2.6" ry="8" fill="#6b5a43" transform="rotate(${lean * 3} ${x + lean * 2} ${232 - hh})"/>`; }).join('');
-  return `<svg viewBox="0 0 520 230" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky1)"/><stop offset="1" stop-color="var(--sky2)"/></linearGradient></defs>
-  <rect width="520" height="230" fill="url(#sk)"/>${stars}${orb}${cloud(300, 60, 1)}${cloud(90, 100, .7)}${cloud(450, 120, .6)}
-  <path d="M0 150 C60 118 110 128 170 140 C230 152 280 108 340 112 C400 116 450 142 520 124 L520 230 L0 230Z" fill="var(--hill1)"/>
-  <path d="M0 178 C70 160 130 170 200 178 C280 188 340 160 420 164 C470 166 500 176 520 172 L520 230 L0 230Z" fill="var(--hill2)"/>
-  ${reeds}
-  <g transform="translate(-110 6)"><path d="M520 118 C470 124 420 132 360 140 C330 144 310 146 280 152" stroke="#4a3a28" stroke-width="7" fill="none" stroke-linecap="round"/>
-  <path d="M470 126 C478 112 488 108 498 108 M400 134 C404 122 414 116 424 114 M330 143 c-6 10 -14 14 -24 14" stroke="#4a3a28" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <g fill="var(--moss)" opacity=".9"><ellipse cx="499" cy="106" rx="11" ry="5" transform="rotate(-25 499 106)"/><ellipse cx="425" cy="112" rx="11" ry="5" transform="rotate(-20 425 112)"/><ellipse cx="303" cy="158" rx="11" ry="5" transform="rotate(20 303 158)"/></g>
-  <g class="bird" transform="translate(338 74) scale(.78)">
-    <path d="M72 60 L108 84 L103 91 L66 72Z" fill="#4a3d2d"/>
-    <ellipse cx="50" cy="52" rx="31" ry="21" transform="rotate(18 50 52)" fill="#7a6648"/>
-    <path d="M26 56 C30 72 50 76 66 66 C54 70 38 68 26 56Z" fill="#e8ddc0"/>
-    <path d="M22 46 C26 64 40 72 56 66 C46 64 34 58 30 46Z" fill="#d9763a"/>
-    <path d="M42 40 C62 34 82 50 80 64 C62 66 46 58 42 40Z" fill="#4f4130"/>
-    <circle cx="27" cy="36" r="15" fill="#7a6648"/><path d="M15 40 C16 50 26 54 34 48 C26 47 20 44 15 40Z" fill="#d9763a"/>
-    <path d="M13 33 L-2 38 L13 42Z" fill="#e0a43a"/><circle cx="24" cy="33" r="2.6" fill="#1b1810"/><circle cx="24.8" cy="32.2" r=".8" fill="#fff"/>
-    <path d="M46 70 L44 84 M54 71 L53 84" stroke="#4a3a28" stroke-width="2.4" stroke-linecap="round"/>
-    <g class="notes" fill="var(--ink)" opacity="0"><text x="-30" y="22" font-size="20" font-family="Fraunces">♪</text><text x="-48" y="6" font-size="16" font-family="Fraunces">♫</text></g>
-  </g></g>
-  </svg>`;
+/* ---------- header: a field-guide plate that follows the light ---------- */
+/* Public-domain plates (see README): Jerdon, Illustrations of Indian Ornithology, 1847; Hardwicke nightjar, 1790s. */
+const PLATES = {
+  dawn:  { img: 'assets/plate-prinia.webp',     cls: 'prinia',     cap: 'Pl. VI \u00b7 Prinia socialis \u00b7 ashy prinia' },
+  day:   { img: 'assets/plate-flycatcher.webp', cls: 'flycatcher', cap: 'Pl. VII \u00b7 Muscipeta paradisi \u00b7 Indian paradise flycatcher' },
+  dusk:  { img: 'assets/plate-fantail.webp',    cls: 'fantail',    cap: 'Pl. II \u00b7 Leucocirca albofrontata \u00b7 white-browed fantail' },
+  night: { img: 'assets/plate-nightjar-night.webp',   cls: 'nightjar',   cap: 'Caprimulgus indicus \u00b7 Indian nightjar' }
+};
+function scenePlate(t, h) {
+  const p = PLATES[t], night = t === 'night';
+  const frac = night ? 0.5 : Math.min(1, Math.max(0, (h - 5.5) / 14));
+  const ox = 8 + frac * 26, oy = 62 - Math.sin(frac * Math.PI) * 38;
+  const orb = night
+    ? '<svg class="orb" style="left:22%;top:16%" viewBox="0 0 40 40"><defs><mask id="mm"><rect width="40" height="40" fill="#fff"/><circle cx="27.5" cy="16" r="12.5" fill="#000"/></mask></defs><circle cx="20" cy="20" r="14" fill="#e8e0c6" mask="url(#mm)"/></svg>'
+    : `<svg class="orb" style="left:${ox}%;top:${oy}%" viewBox="0 0 40 40"><g stroke="${t === 'day' ? '#eab54e' : '#e08a4a'}" stroke-width="2.4" stroke-linecap="round"><path d="M20 3v5M20 32v5M3 20h5M32 20h5M8 8l3.5 3.5M28.5 28.5L32 32M32 8l-3.5 3.5M11.5 28.5L8 32"/></g><circle cx="20" cy="20" r="8.5" fill="${t === 'day' ? '#f2c35e' : '#e8955a'}"/></svg>`;
+  const stars = night ? '<div class="stars">' + Array.from({ length: 30 }, (_, i) => `<i style="left:${(i * 89) % 96 + 2}%;top:${(i * 47) % 62 + 3}%;width:${i % 4 ? 2 : 3}px;height:${i % 4 ? 2 : 3}px;opacity:${.35 + (i % 5) / 7}"></i>`).join('') + '</div>' : '';
+  const notes = '<div class="pnotes"><i>\u266a</i><i>\u266b</i></div>';
+  return `<img class="plate ${p.cls}" src="${p.img}" alt="">${stars}<div class="wash"></div>${orb}${notes}<div class="platecap">${p.cap}</div>`;
 }
-const sceneCss = document.createElement('style'); sceneCss.textContent = `.bird{transform-origin:380px 160px}.listening .bird{animation:tilt 3s infinite ease-in-out}@keyframes tilt{0%,100%{transform:translate(338px,74px) scale(.78) rotate(0)}50%{transform:translate(338px,74px) scale(.78) rotate(-5deg)}}.listening .notes{animation:nt 2.4s infinite}@keyframes nt{0%{opacity:0;transform:translate(8px,6px)}40%{opacity:.8}100%{opacity:0;transform:translate(-8px,-8px)}}`; document.head.appendChild(sceneCss);
 
 /* ---------- species info (Wikipedia) ---------- */
 const infoCache = {};
